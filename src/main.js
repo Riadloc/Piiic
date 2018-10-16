@@ -7,10 +7,12 @@ import 'muse-ui/lib/styles/base.less'
 import 'muse-ui/lib/styles/theme.less'
 import './assets/app.scss'
 
-import { Button, Icon } from 'muse-ui'
+import { Button, Icon, Form, TextField } from 'muse-ui'
 
 Vue.use(Button)
 Vue.use(Icon)
+Vue.use(Form)
+Vue.use(TextField)
 
 Vue.config.productionTip = false
 

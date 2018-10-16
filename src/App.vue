@@ -2,7 +2,7 @@
   <div id="app" ref="app">
     <div class="Main">
       <header></header>
-      <main>
+      <main :style="{width: screenWidth >= 440 ? '440px' : '100%'}">
         <section class="editor-wrapper">
           <div id="toolbar">
             <span class="ql-formats">
@@ -83,15 +83,18 @@
           <mu-icon :value="settingsShow ? 'close' : 'settings'" size="40" color="#fff"></mu-icon>
         </div>
         <div class="settings-container">
-          <h3>边距调整</h3>
-          <div>
-            <span>上下边距</span>
-            <input type="text">
-          </div>
-          <div>
-            <span>左右边距</span>
-            <input type="text">
-          </div>
+          <h2 style="text-align: center;">边距调整</h2>
+          <mu-form :model="form" class="mu-demo-form" label-position="right" label-width="100">
+            <mu-form-item prop="paddingVertical" label="上下边距">
+              <mu-text-field v-model="form.paddingVertical"></mu-text-field>
+            </mu-form-item>
+            <mu-form-item prop="paddingHorizon" label="左右边距">
+              <mu-text-field v-model="form.paddingHorizon"></mu-text-field>
+            </mu-form-item>
+            <mu-form-item>
+              <mu-button color="#3f51b5">保存设置</mu-button>
+            </mu-form-item>
+          </mu-form>
         </div>
       </section>
     </div>
@@ -120,6 +123,7 @@ export default {
   name: 'app',
   data () {
     return {
+      screenWidth: window.screen.width,
       picAttr: {
         width: 0,
         height: 0,
@@ -127,11 +131,17 @@ export default {
         stream: '',
         download: ''
       },
+      form: {
+        paddingVertical: 12,
+        paddingHorizon: 15
+      },
       settingsShow: false,
       cboShow: false,
       paperColor: '#fff',
       cboColor: null,
-      colors: ['#ffffff', '#ecf0f1', '#95a5a6', '#1abc9c', '#2ecc71', '#3498db', '#9b59b6', '#34495e', '#f1c40f', '#e67e22', '#e74c3c']
+      colors: ['#ffffff', '#ecf0f1', '#95a5a6', '#1abc9c', '#2ecc71', '#3498db', '#9b59b6',
+        '#34495e', '#f1c40f', '#e67e22', '#e74c3c', '#faeed7', '#e9eff5', '#e7f0e1', '#f2e4e9',
+        '#f7f7f7', '#343434']
     }
   },
   mounted () {
@@ -179,18 +189,18 @@ export default {
         node.style.cssText = `max-width:${width - paddingHorizon}px`
       })
       this.$refs.app.appendChild(ele)
-      const canvas = document.createElement('canvas') // 创建一个canvas节点
-      const scale = 2 // 定义任意放大倍数 支持小数
-      canvas.width = width * scale // 定义canvas 宽度 * 缩放
-      canvas.height = height * scale // 定义canvas高度 *缩放
-      canvas.getContext('2d').scale(scale, scale) // 获取context, 设置scale
+      const canvas = document.createElement('canvas')
+      const scale = 2
+      canvas.width = width * scale
+      canvas.height = height * scale
+      canvas.getContext('2d').scale(scale, scale)
       const opts = {
-        scale: scale, // 添加的scale 参数
-        canvas: canvas, // 自定义 canvas
-        // logging: true, //日志开关，便于查看html2canvas的内部执行流程
-        width: width, // dom 原始宽度
+        scale: scale,
+        canvas: canvas,
+        logging: false,
+        width: width,
         height: height,
-        useCORS: true // 【重要】开启跨域配置
+        useCORS: true
       }
       html2canvas(ele, opts).then((canvas) => {
         const type = 'image/png'
@@ -200,9 +210,9 @@ export default {
           height,
           url,
           stream: url.replace(type, 'image/octet-stream'),
-          download: `pic-${this.formatDate(new Date())}.png`
+          download: `piiic-${this.formatDate(new Date())}.png`
         }
-        // this.$refs.app.removeChild(ele)
+        this.$refs.app.removeChild(ele)
       })
     },
     resetPicAttr () {
@@ -258,7 +268,6 @@ export default {
     }
     main {
       position: relative;
-      width: 440px;
       margin: 20px auto 0;
       .editor-wrapper {
         position: relative;
@@ -283,13 +292,14 @@ export default {
         transform: scale(0);
         transform-origin: 50% 50%;
         background-color: #E0E0E0;
+        overflow: hidden;
         .colors-options {
           display: flex;
           flex-wrap: wrap;
           list-style: none;
           li {
-            flex: 0 0 33.3333%;
-            height: 180px;
+            flex: 0 0 33.333%;
+            height: 100px;
           }
         }
         .colors-btns {
