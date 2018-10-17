@@ -56,16 +56,16 @@
           <div id="editor" ref="editor"></div>
         </section>
         <section class="btns">
-          <mu-button color="#3f51b5" full-width @click="genPic">生成长图</mu-button>
+          <mu-button color="#3f51b5" full-width @click="genPic" v-loading="loading" data-mu-loading-size="24">生成长图</mu-button>
         </section>
         <div :class="['custom-background-options', cboShow ? 'scaleIn' : '']">
           <ul class="colors-options">
             <li
-              v-for="color in colors"
-              :key="color"
-              :class="{'color-selected': cboColor === color}"
-              :style="{'background-color': color}"
-              @click="selectColor(color)"
+              v-for="pattern in patterns.list"
+              :key="pattern"
+              :class="{'color-selected': pattern === cboColor}"
+              :style="{'background-image': `url(/img/pattern/${pattern}.${patterns.suffix})`}"
+              @click="selectBg(pattern)"
             ></li>
           </ul>
           <div class="colors-btns">
@@ -92,7 +92,7 @@
               <mu-text-field v-model="form.paddingHorizon"></mu-text-field>
             </mu-form-item>
             <mu-form-item>
-              <mu-button color="#3f51b5">保存设置</mu-button>
+              <mu-button color="#3f51b5" @click="saveConfig">保存设置</mu-button>
             </mu-form-item>
           </mu-form>
         </div>
@@ -135,13 +135,19 @@ export default {
         paddingVertical: 12,
         paddingHorizon: 15
       },
+      loading: false,
       settingsShow: false,
       cboShow: false,
       paperColor: '#fff',
       cboColor: null,
       colors: ['#ffffff', '#ecf0f1', '#95a5a6', '#1abc9c', '#2ecc71', '#3498db', '#9b59b6',
         '#34495e', '#f1c40f', '#e67e22', '#e74c3c', '#faeed7', '#e9eff5', '#e7f0e1', '#f2e4e9',
-        '#f7f7f7', '#343434']
+        '#f7f7f7', '#343434'],
+      patterns: {
+        suffix: 'png',
+        list: ['1', '2', '3', '4', '5', '6', '7', '8', '9'],
+        dark: ['1', '9']
+      }
     }
   },
   mounted () {
@@ -166,11 +172,13 @@ export default {
         placeholder: '',
         readOnly: false
       }
-      const editor = this.$refs.editor
-      this.Quill = new Quill(editor, options)
+      const ele = this.$refs.editor
+      this.Quill = new Quill(ele, options)
+      this.editor = document.querySelector('.ql-editor')
     },
     genPic () {
-      const shareContent = document.querySelector('.ql-editor')
+      this.loading = true
+      const shareContent = this.editor
       const width = shareContent.scrollWidth
       const height = shareContent.scrollHeight
       const ele = shareContent.cloneNode(true)
@@ -213,6 +221,10 @@ export default {
           download: `piiic-${this.formatDate(new Date())}.png`
         }
         this.$refs.app.removeChild(ele)
+        this.loading = false
+      }).catch(err => {
+        this.loading = false
+        console.error(err)
       })
     },
     resetPicAttr () {
@@ -228,13 +240,24 @@ export default {
       const oldVal = this.settingsShow
       this.settingsShow = !oldVal
     },
-    selectColor (color) {
-      this.cboColor = this.cboColor !== color ? color : null
+    selectBg (pattern) {
+      this.cboColor = this.cboColor !== pattern ? pattern : null
     },
     applyPaperColor () {
-      const fontColor = this.isDarkColor(this.cboColor) ? '#fff' : '#111'
-      document.querySelector('.ql-editor').style.cssText = `background-color:${this.cboColor};color:${fontColor};`
+      const { cboColor, patterns } = this
+      const color = patterns.dark.includes(cboColor) ? '#ffffff' : '#111111'
+      const ele = this.editor
+      Object.entries({
+        background: `url(/img/pattern/${cboColor}.png)`,
+        color
+      }).forEach(entry => ele.style.setProperty(entry[0], entry[1]))
+      this.cboColor = null
       this.cboShow = false
+    },
+    saveConfig () {
+      const { paddingVertical, paddingHorizon } = this.form
+      const cssText = `${paddingVertical}px ${paddingHorizon}px`
+      this.editor.style.setProperty('padding', cssText)
     },
     formatDate (date) {
       return date.toISOString().split('T')[0]
@@ -291,7 +314,7 @@ export default {
         height: 100%;
         transform: scale(0);
         transform-origin: 50% 50%;
-        background-color: #E0E0E0;
+        background-color: #FAFAFA;
         overflow: hidden;
         .colors-options {
           display: flex;
@@ -299,7 +322,7 @@ export default {
           list-style: none;
           li {
             flex: 0 0 33.333%;
-            height: 100px;
+            height: 180px;
           }
         }
         .colors-btns {
@@ -376,6 +399,7 @@ export default {
 .color-selected {
   border: 4px solid #FFF9C4;
   box-sizing: border-box;
+  background-origin: border-box;
 }
 
 .slideInX {
